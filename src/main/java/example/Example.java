@@ -1,6 +1,9 @@
 package example;
 
-public class Example implements Client{
+import com.stampery.Consumer;
+import com.stampery.Stampery;
+
+public class Example implements Consumer{
 	
 	private Stampery stampery;
 
