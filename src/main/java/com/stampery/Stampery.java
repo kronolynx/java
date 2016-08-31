@@ -1,17 +1,26 @@
 package com.stampery;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import org.bouncycastle.jcajce.provider.digest.SHA3.DigestSHA3;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessageUnpacker;
 import org.msgpack.rpc.Client;
 import org.msgpack.rpc.Future;
 import org.msgpack.type.Value;
 
-
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 
 public class Stampery {
 
@@ -20,8 +29,9 @@ public class Stampery {
 	private String clientId;
 	private String[] apiEndPoint;
 	private String[] amqpEndPoint;
-	private Client client;
+	private Client apiClient;
 	private boolean auth;
+	private Channel channel;
 
 	public Stampery(String secret) {
 		this(secret, "prod");
@@ -30,18 +40,16 @@ public class Stampery {
 	public Stampery(String secret, String branch) {
 		this.secret = secret;
 		clientId = getMD5(secret).substring(0, 15);
-		System.out.println(clientId);
 		setEndPoints(branch);
 		
 	}
 
 	public void start() {
-		System.out.println("start");
 		apiLogin();
+		amqpLogin();
 	}
 
 	public void subscribe(Consumer consumer) {
-		System.out.println("subscribe");
 		consumers.add(consumer);
 	}
 
@@ -54,14 +62,22 @@ public class Stampery {
 	}
 	
 
-	public void stamp(String digest) {
-		
+	public void stamp(String data) {
+		System.out.println("\nStamping \n" + data);
+		try{
+			apiClient.callApply("stamp", new Object[]{data.toUpperCase()});
+		} catch (Exception e) {
+			// Message pack returns 0 even if everything is ok
+			// only report error if exception doesn't end with 0
+			if(!e.getMessage().endsWith("0"))
+				emitError(e.getMessage());
+		}
 	}    
 	
 	private void apiLogin(){
 		try {
-			client = new Client(apiEndPoint[0], Integer.parseInt(apiEndPoint[1]));
-			Future<Value> req = client.callAsyncApply("stampery.3.auth", new Object[]{clientId, secret});
+			apiClient = new Client(apiEndPoint[0], Integer.parseInt(apiEndPoint[1]));
+			Future<Value> req = apiClient.callAsyncApply("stampery.3.auth", new Object[]{clientId, secret});
 			req.join();
 			auth = req.getResult().asBooleanValue().getBoolean();
 			if(auth)
@@ -76,11 +92,44 @@ public class Stampery {
 	}
 	
 	private void amqpLogin(){
-		
+		ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(amqpEndPoint[0]);
+        factory.setPort(Integer.parseInt(amqpEndPoint[1]));
+        factory.setUsername(amqpEndPoint[2]);
+        factory.setPassword(amqpEndPoint[3]);
+        factory.setVirtualHost(amqpEndPoint[4]);
+        Connection connection;
+		try {
+			connection = factory.newConnection();
+			System.out.println("[QUEUE] Connected to Rabbit!");
+			channel = connection.createChannel();
+			emitReady();
+			handleQueue();
+		} catch (IOException e) {
+			emitError(e.getMessage());
+		} catch (TimeoutException e) {
+			emitError(e.getMessage());
+		}
 	}
 	
 	private void handleQueue(){
-		
+		DefaultConsumer consumer = new DefaultConsumer(channel) {
+			@Override
+			public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
+					throws IOException {
+				
+				String hash = envelope.getRoutingKey();
+				MessageUnpacker msgpack = MessagePack.newDefaultUnpacker(body);
+				
+				String proof = msgpack.unpackValue().toJson();		
+				emitProof(hash, proof);	
+			}
+		};
+		try {
+			channel.basicConsume(clientId + "-clnt", true, consumer);
+		} catch (IOException e) {
+			emitError(e.getMessage());
+		}
 	}
 	
 	private String getMD5(String data){
@@ -119,4 +168,15 @@ public class Stampery {
 			consumer.onReady();
 		}
 	}
+	private void emitError(String err){
+		for (Consumer consumer : consumers) {
+			consumer.onError(err);
+		}
+	}
+	private void emitProof(String hash, String proof){
+		for (Consumer consumer : consumers) {
+			consumer.onProof(hash, proof);
+		}
+	}
+	
 }

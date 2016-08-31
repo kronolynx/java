@@ -1,5 +1,7 @@
 package example;
 
+import java.util.Arrays;
+
 import com.stampery.Consumer;
 import com.stampery.Stampery;
 
@@ -18,7 +20,7 @@ public class Example implements Consumer{
 	}
 
 	public void onReady() {
-		String digest = stampery.hash("Hello, blockchain!");
+		String digest = stampery.hash("Hello, blockchain!" + Math.random());
 		stampery.stamp(digest);	
 	}
 
