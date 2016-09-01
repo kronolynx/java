@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.bouncycastle.jcajce.provider.digest.SHA3.DigestSHA3;
-import org.msgpack.core.MessagePack;
-import org.msgpack.core.MessageUnpacker;
 import org.msgpack.rpc.Client;
 import org.msgpack.rpc.Future;
 import org.msgpack.type.Value;
@@ -43,16 +41,28 @@ public class Stampery {
 		setEndPoints(branch);
 		
 	}
-
+	
+	/**
+	 * Start
+	 */
 	public void start() {
 		apiLogin();
 		amqpLogin();
 	}
 
+	/**
+	 * Function used to receive the proofs
+	 * @param consumer Object that implements the interface Consumer
+	 */
 	public void subscribe(Consumer consumer) {
 		consumers.add(consumer);
 	}
 
+	/**
+	 * Function to hash a string using SHA3 512
+	 * @param data string 
+	 * @return 
+	 */
 	public String hash(String data) {
 		final DigestSHA3 sha3 = new DigestSHA3(512);
 
@@ -61,7 +71,10 @@ public class Stampery {
         return digestToString(sha3.digest()).toUpperCase();
 	}
 	
-
+	/**
+	 * Stamp 
+	 * @param data String with the data to be Stamped
+	 */
 	public void stamp(String data) {
 		System.out.println("\nStamping \n" + data);
 		try{
@@ -78,7 +91,7 @@ public class Stampery {
 		try {
 			apiClient = new Client(apiEndPoint[0], Integer.parseInt(apiEndPoint[1]));
 			Future<Value> req = apiClient.callAsyncApply("stampery.3.auth", new Object[]{clientId, secret});
-			req.join();
+		    req.join();
 			auth = req.getResult().asBooleanValue().getBoolean();
 			if(auth)
 				System.out.println("logged " + clientId);
@@ -119,10 +132,9 @@ public class Stampery {
 					throws IOException {
 				
 				String hash = envelope.getRoutingKey();
-				MessageUnpacker msgpack = MessagePack.newDefaultUnpacker(body);
-				
-				String proof = msgpack.unpackValue().toJson();		
-				emitProof(hash, proof);	
+				org.msgpack.core.MessageUnpacker msgpack = org.msgpack.core.MessagePack.newDefaultUnpacker(body);
+							
+				emitProof(hash, new Proof(msgpack.unpackValue().asArrayValue()));
 			}
 		};
 		try {
@@ -154,8 +166,7 @@ public class Stampery {
     }
 	private void setEndPoints(String branch) {
 		if("prod".equalsIgnoreCase(branch)){
-//			apiEndPoint = new String[]{ "api.stampery.com", "4000"};
-			apiEndPoint = new String[]{ "localhost", "4000"};
+			apiEndPoint = new String[]{ "api.stampery.com", "4000"};
 			amqpEndPoint = new String[]{ "young-squirrel.rmq.cloudamqp.com", "5672", "consumer", "9FBln3UxOgwgLZtYvResNXE7", "ukgmnhoi"};
 		} else {
 			apiEndPoint = new String[]{ "api-beta.stampery.com", "4000"};
@@ -173,10 +184,9 @@ public class Stampery {
 			consumer.onError(err);
 		}
 	}
-	private void emitProof(String hash, String proof){
+	private void emitProof(String hash, Proof proof){
 		for (Consumer consumer : consumers) {
 			consumer.onProof(hash, proof);
 		}
-	}
-	
+	}	
 }
