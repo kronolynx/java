@@ -7,7 +7,7 @@ Stampery API for Java. Notarize all your data using the blockchain!
 Maven artifacts are [released to Maven Central](https://search.maven.org/#search%7Cga%7C1%7Ca%3A%22stampery-client%22).
 
 For Maven users:
-```
+```xml
 <dependency>
     <groupId>com.github.stampery</groupId>
     <artifactId>stampery-client</artifactId>
@@ -16,12 +16,12 @@ For Maven users:
 ```
 
 For sbt users:
-```
+```java
 libraryDependencies += "com.github.stampery" % "stampery-client" % "1.0"
 ```
 
 For gradle users:
-```
+```java
 repositories {
     mavenCentral()
 }
