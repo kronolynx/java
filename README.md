@@ -2,13 +2,34 @@
 Stampery API for Java. Notarize all your data using the blockchain!
 
 ## Installation
+#### Dependency (Maven Artifact)
 
+Maven artifacts are [released to Maven Central](https://search.maven.org/#search%7Cga%7C1%7Ca%3A%22stampery-client%22).
 
-
-```java
-// coming soon
+For Maven users:
+```
+<dependency>
+    <groupId>com.github.stampery</groupId>
+    <artifactId>stampery-client</artifactId>
+    <version>1.0</version>
+</dependency>
 ```
 
+For sbt users:
+```
+libraryDependencies += "com.github.stampery" % "stampery-client" % "1.0"
+```
+
+For gradle users:
+```
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.github.stampery:stampery-client:1.0'
+}
+```
 
 ## Usage
 We must create a class that implements the Stampery API Consumer interface
