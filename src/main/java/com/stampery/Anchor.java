@@ -10,11 +10,19 @@ public class Anchor {
 		chain = anchor.get(0).asIntegerValue().asInt();
 		tx = anchor.get(1).toString();
 	}
-	
+	/**
+	 * Chain codes:
+	 * 1 Bitcoin livenet
+	 * 2 Ethererum livenet
+	 * @return Chain code
+	 */
 	public int getChain() {
 		return chain;
 	}
 
+	/**
+	 * @return Transaction ID
+	 */
 	public String getTx() {
 		return tx;
 	}

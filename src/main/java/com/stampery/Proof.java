@@ -1,11 +1,7 @@
 package com.stampery;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.msgpack.value.ArrayValue;
-import org.msgpack.value.ImmutableArrayValue;
 
 public class Proof {
 	private int version;
@@ -23,22 +19,30 @@ public class Proof {
 		anchor = new Anchor(proof.get(3).asArrayValue());
 	} 
 	
-
+	/**
+	 * @return BTA version used
+	 */
 	public int getVersion() {
 		return version;
 	}
 
-
+	/**
+	 * @return Merkle siblings
+	 */
 	public String[] getSiblings() {
 		return siblings;
 	}
 
-
+	/**
+	 * @return Merkle root
+	 */
 	public String getRoot() {
 		return root;
 	}
 
-
+	/**
+	 * @return The anchor which contains the chain code and the transaction ID
+	 */
 	public Anchor getAnchor() {
 		return anchor;
 	}
