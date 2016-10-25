@@ -1,9 +1,7 @@
 package example;
 
-public class App 
-{
-    public static void main( String[] args )
-    {
-    	new Example();
-    }
+public class App {
+	public static void main(String[] args) {
+		new Example();
+	}
 }
