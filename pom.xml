@@ -4,7 +4,7 @@
 	<groupId>com.github.stampery</groupId>
 	<artifactId>stampery-client</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0</version>
+	<version>1.0.1</version>
 	<name>stampery-client</name>
 	<description>Stampery API for Java. Notarize all your data using the blockchain!</description>
 	<url>https://github.com/Stampery</url>
