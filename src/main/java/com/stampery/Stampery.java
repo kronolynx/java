@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
 import org.bouncycastle.jcajce.provider.digest.SHA3.DigestSHA3;
+import org.msgpack.MessageTypeException;
 import org.msgpack.rpc.Client;
 import org.msgpack.rpc.Future;
 import org.msgpack.type.Value;
@@ -49,7 +50,8 @@ public class Stampery {
 	 */
 	public void start() {
 		apiLogin();
-		amqpLogin();
+		if (auth)
+			amqpLogin();
 	}
 
 	/**
@@ -102,14 +104,16 @@ public class Stampery {
 					new Object[] { clientId, secret, "java-" + getVersion() });
 			req.join();
 			auth = req.getResult().asBooleanValue().getBoolean();
-			if (auth)
-				System.out.println("logged " + clientId);
+
+			System.out.println("logged " + clientId);
 
 		} catch (UnknownHostException e) {
 			System.err.println("couldn't connect to API");
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} catch (MessageTypeException e) {
+			emitError("Failed to login");
 		}
 	}
 
