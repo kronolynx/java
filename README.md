@@ -69,16 +69,16 @@ public class Example implements Consumer{
 
 	public void onReady() {
 		// In this case we are going to add a random number to the string
-		// to generate a different hash each time.
+		// in order to generate a different hash each time.
 		String digest = stampery.hash("Hello, blockchain!" + Math.random());
 		// stamp the hash
 		stampery.stamp(digest);
 	}
-
+	// Receive proofs
 	public void onProof(String hash, Proof proof) {
-		// each time a proof is received
 		System.out.println(hash);
 		System.out.println(proof);
+		System.out.println("Proof validity " + stampery.prove(hash, proof) + "\n");
 	}
 }
 ```
